@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide to Azure Deployment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Warm Neutrals" - Background: #F5F5F4 (Stone 100), Main Text: #292524 (Stone 800), Accent: #A8A29E (Stone 400), Card BG: #FFFFFF (White), Chart Colors: #7DD3FC, #FBBF24, #818CF8, #6EE7B7 -->
+    <!-- Application Structure Plan: A single-page dashboard layout is used. A header introduces the guide. The core of the app is a 4-column grid, with each column representing an Azure service. This allows for easy side-by-side comparison. Below the main grid, an interactive radar chart provides a visual comparison of the services based on key metrics. A final "How to Choose" section summarizes the information in a clear, actionable table. This structure was chosen to present a dense topic in a digestible, visually engaging, and comparative manner, facilitating quick understanding and decision-making for new developers. -->
+    <!-- Visualization & Content Choices: Report Info: Pros/Cons lists for each service. -> Goal: Compare qualitative features. -> Viz/Presentation: Styled HTML lists with icons (check/cross). -> Interaction: None, static display for clarity. -> Justification: Lists are highly scannable and universally understood. | Report Info: Key attributes (Cost, Scalability, etc.). -> Goal: Compare quantitative/relative aspects. -> Viz/Presentation: Interactive Radar Chart (Chart.js). -> Interaction: Hovering over points shows tooltips with scores. -> Justification: A radar chart is excellent for comparing multiple entities across several common variables, providing a quick visual summary of strengths and weaknesses. | Report Info: Summary table. -> Goal: Provide a final decision-making tool. -> Viz/Presentation: Styled HTML table. -> Interaction: None. -> Justification: A table is the most effective way to present structured, summary information for direct comparison. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F4;
+            color: #292524;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 50vh;
+            max-height: 450px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+        }
+        .nav-button.active {
+            background-color: #7DD3FC;
+            color: #0C4A6E;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto px-4 py-8 md:py-12">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-sky-800 mb-2">So, You've Built a Web App... Now What?</h1>
+            <p class="text-lg text-stone-600 max-w-3xl mx-auto">Welcome to your interactive guide to deploying on Azure! Think of it like a party planner for your code. We'll help you find the perfect venue to host your masterpiece.</p>
+        </header>
+
+        <main>
+            <section id="comparison-tool" class="mb-16">
+                 <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-stone-800">Choose Your Deployment Venue</h2>
+                    <p class="text-stone-600 mt-2">Click on a service below to see the details and how it stacks up on our comparison chart.</p>
+                </div>
+                <div id="service-nav" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                </div>
+
+                <div id="service-details" class="bg-white p-6 rounded-2xl shadow-lg min-h-[300px]">
+                </div>
+            </section>
+
+            <section id="visual-comparison" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-stone-800">At-a-Glance Comparison</h2>
+                    <p class="text-stone-600 mt-2">This chart visually compares the core strengths of each Azure service. A higher score means it excels in that area. Hover over the points for details.</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </section>
+
+            <section id="summary-guide" class="mt-16">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-stone-800">How to Choose Your Venue</h2>
+                     <p class="text-stone-600 mt-2">Still deciding? Use this quick guide to find the perfect match for your project's needs.</p>
+                </div>
+                <div class="overflow-x-auto bg-white p-6 rounded-2xl shadow-lg">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 bg-stone-100 font-bold uppercase text-sm text-stone-600 border-b border-stone-200 rounded-tl-lg">If your app is...</th>
+                                <th class="py-3 px-4 bg-stone-100 font-bold uppercase text-sm text-stone-600 border-b border-stone-200">And you want...</th>
+                                <th class="py-3 px-4 bg-stone-100 font-bold uppercase text-sm text-stone-600 border-b border-stone-200 rounded-tr-lg">Choose...</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-stone-700">
+                            <tr>
+                                <td class="py-4 px-4 border-b border-stone-200">A traditional web app (e.g., .NET, Node.js)</td>
+                                <td class="py-4 px-4 border-b border-stone-200">An easy, managed experience</td>
+                                <td class="py-4 px-4 border-b border-stone-200 font-semibold text-sky-700">Azure App Service 🏨</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-4 border-b border-stone-200">An API or a background task</td>
+                                <td class="py-4 px-4 border-b border-stone-200">To pay only for what you use</td>
+                                <td class="py-4 px-4 border-b border-stone-200 font-semibold text-amber-700">Azure Functions 🚚</td>
+                            </tr>
+                             <tr>
+                                <td class="py-4 px-4 border-b border-stone-200">Built with containers and microservices</td>
+                                <td class="py-4 px-4 border-b border-stone-200">Control without managing servers</td>
+                                <td class="py-4 px-4 border-b border-stone-200 font-semibold text-indigo-700">Azure Container Apps 🍽️</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-4">A front-end app (e.g., React, Vue) or a static site</td>
+                                <td class="py-4 px-4">The fastest performance and lowest cost</td>
+                                <td class="py-4 px-4 font-semibold text-emerald-700">Azure Static Web Apps 🧺</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-16 text-stone-500">
+            <p>Have fun deploying! 🎉</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const servicesData = {
+            'app-service': {
+                name: 'Azure App Service',
+                emoji: '🏨',
+                title: 'The All-Inclusive Resort',
+                description: "Imagine a luxurious resort where everything is handled for you. You just show up with your luggage (your code), and the resort staff (Azure) takes care of the rest—the room, the cleaning, the security, everything.",
+                vibe: 'Super relaxed and hassle-free. You can focus on having fun (developing your app) without worrying about the boring stuff (managing servers).',
+                pros: [
+                    "**Easy to Use:** The most straightforward way to get your web app online.",
+                    "**Multi-Lingual:** Speaks your language, whether it's .NET, Node.js, Python, Java, or PHP.",
+                    "**Scalable:** Easily get a bigger room (scale up) or more rooms (scale out).",
+                    "**Packed with Features:** Comes with built-in security, automatic updates, and easy deployment from GitHub."
+                ],
+                cons: [
+                    "**A Bit Pricey:** Can be more expensive than other options, especially as you scale.",
+                    "**Less Control:** You have less control over the underlying server environment."
+                ],
+                color: 'rgba(56, 189, 248, 0.2)',
+                borderColor: 'rgba(14, 116, 144, 1)',
+                scores: {
+                    'Ease of Use': 9,
+                    'Cost-Effectiveness': 5,
+                    'Scalability': 8,
+                    'Control': 4,
+                    'Speed (for Static)': 6
+                }
+            },
+            'functions': {
+                name: 'Azure Functions',
+                emoji: '🚚',
+                title: 'The Food Truck',
+                description: "Picture a trendy food truck. It only shows up when there are hungry customers, serves one or two amazing dishes really well, and leaves when the rush is over.",
+                vibe: 'Efficient, focused, and pay-as-you-go. You only pay when your code is actually running.',
+                pros: [
+                    "**Super Cost-Effective:** You only pay for the time your code runs.",
+                    "**Event-Driven:** Runs in response to 'events' like an HTTP request, a new file, or a schedule.",
+                    "**Scales Automatically:** Magically handles sudden spikes in traffic."
+                ],
+                cons: [
+                    "**'Cold Starts':** Can have a slight delay if it hasn't been used in a while.",
+                    "**Not 'Always On':** Not designed for applications that need to be running 24/7."
+                ],
+                color: 'rgba(251, 191, 36, 0.2)',
+                borderColor: 'rgba(180, 83, 9, 1)',
+                scores: {
+                    'Ease of Use': 7,
+                    'Cost-Effectiveness': 10,
+                    'Scalability': 9,
+                    'Control': 6,
+                    'Speed (for Static)': 5
+                }
+            },
+            'container-apps': {
+                name: 'Azure Container Apps',
+                emoji: '🍽️',
+                title: 'The Pop-Up Restaurant',
+                description: "A pop-up restaurant is the cool middle ground. You get to design your own menu and kitchen (your container), but you don't have to build the whole restaurant from scratch.",
+                vibe: 'Modern, flexible, and built for the latest culinary trends (microservices).',
+                pros: [
+                    "**Container-Powered:** Package your app and dependencies into a container for consistency.",
+                    "**Serverless:** You still don't have to manage servers!",
+                    "**Great for Microservices:** Easily run multiple containers that work together."
+                ],
+                cons: [
+                    "**A Bit of a Learning Curve:** You'll need to know a little bit about containers."
+                ],
+                color: 'rgba(129, 140, 248, 0.2)',
+                borderColor: 'rgba(79, 70, 229, 1)',
+                scores: {
+                    'Ease of Use': 6,
+                    'Cost-Effectiveness': 7,
+                    'Scalability': 10,
+                    'Control': 8,
+                    'Speed (for Static)': 7
+                }
+            },
+            'static-web-apps': {
+                name: 'Azure Static Web Apps',
+                emoji: '🧺',
+                title: 'The Picnic in the Park',
+                description: "Sometimes, you just want something simple and fun. A picnic in the park is easy to set up, doesn't cost much, and is perfect for a casual get-together.",
+                vibe: 'Simple, fast, and incredibly cheap (often free!).',
+                pros: [
+                    "**Blazing Fast:** Static content is delivered from a global network for super-fast loads.",
+                    "**Super Affordable:** A generous free tier is perfect for personal projects.",
+                    "**Integrated APIs:** Easily add serverless APIs using Azure Functions.",
+                    "**Awesome CI/CD:** Streamlined setup with GitHub and Azure DevOps for automatic deployments."
+                ],
+                cons: [
+                    "**Static Only:** You can't run a traditional server-side application here."
+                ],
+                color: 'rgba(110, 231, 183, 0.2)',
+                borderColor: 'rgba(6, 95, 70, 1)',
+                scores: {
+                    'Ease of Use': 10,
+                    'Cost-Effectiveness': 10,
+                    'Scalability': 7,
+                    'Control': 3,
+                    'Speed (for Static)': 10
+                }
+            }
+        };
+
+        let currentServiceId = 'app-service';
+        const serviceNavContainer = document.getElementById('service-nav');
+        const serviceDetailsContainer = document.getElementById('service-details');
+        const ctx = document.getElementById('comparisonChart').getContext('2d');
+        let comparisonChart;
+
+        function renderNav() {
+            serviceNavContainer.innerHTML = '';
+            Object.keys(servicesData).forEach(id => {
+                const service = servicesData[id];
+                const button = document.createElement('button');
+                button.className = `nav-button text-sm md:text-base font-medium py-2 px-4 rounded-full ${id === currentServiceId ? 'active' : 'bg-white text-stone-600 hover:bg-stone-200'}`;
+                button.textContent = `${service.emoji} ${service.name}`;
+                button.onclick = () => {
+                    currentServiceId = id;
+                    renderNav();
+                    renderServiceDetails();
+                    updateChart();
+                };
+                serviceNavContainer.appendChild(button);
+            });
+        }
+
+        function renderServiceDetails() {
+            const service = servicesData[currentServiceId];
+            serviceDetailsContainer.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                    <div class="md:col-span-2">
+                        <h3 class="text-2xl font-bold mb-2">${service.emoji} ${service.title}</h3>
+                        <p class="text-stone-600 mb-4">${service.description}</p>
+                        <p class="italic text-stone-500"><strong>Vibe:</strong> ${service.vibe}</p>
+                    </div>
+                    <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2 text-emerald-600">Pros</h4>
+                            <ul class="space-y-2">
+                                ${service.pros.map(pro => `<li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">✓</span><span class="text-stone-700">${pro.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</span></li>`).join('')}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2 text-rose-600">Cons</h4>
+                            <ul class="space-y-2">
+                                ${service.cons.map(con => `<li class="flex items-start"><span class="text-rose-500 mr-2 mt-1">✗</span><span class="text-stone-700">${con.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</span></li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createChart() {
+            const labels = Object.keys(servicesData['app-service'].scores);
+            const datasets = Object.keys(servicesData).map(id => {
+                const service = servicesData[id];
+                return {
+                    label: service.name,
+                    data: Object.values(service.scores),
+                    fill: true,
+                    backgroundColor: service.color,
+                    borderColor: service.borderColor,
+                    pointBackgroundColor: service.borderColor,
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: service.borderColor,
+                    hidden: id !== currentServiceId
+                };
+            });
+
+            comparisonChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                           display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.r !== null) {
+                                        label += context.parsed.r + ' / 10';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: '#E7E5E4'
+                            },
+                            grid: {
+                                color: '#E7E5E4'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                },
+                                color: '#57534E'
+                            },
+                            ticks: {
+                                backdropColor: 'rgba(255, 255, 255, 0.75)',
+                                color: '#78716C',
+                                stepSize: 2
+                            },
+                            min: 0,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            comparisonChart.data.datasets.forEach((dataset, index) => {
+                const id = Object.keys(servicesData)[index];
+                dataset.hidden = id !== currentServiceId;
+            });
+            comparisonChart.update();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNav();
+            renderServiceDetails();
+            createChart();
+        });
+    </script>
+</body>
+</html>
